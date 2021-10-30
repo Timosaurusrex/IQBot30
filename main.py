@@ -23,11 +23,11 @@ up = False
 macd_change = False
 sold = False
 
-ema_old = 61900
-lowest = 61366
-highest = 61550
-sar = 61370
-sar_bool = True
+ema_old = 61890
+lowest = 61380
+highest = 62372
+sar = 62372
+sar_bool = False
 
 f = open("COIN_SAVE.txt", "r")     #Restore last Coin
 symbol = f.read()
@@ -262,13 +262,13 @@ def on_message(ws, msg):
             macd = macd_line - ema_macd
             print(f"MACD: {macd}")
 
-        if len(json_message) >= 51 * 30:
+        if len(json_message) >= 28 * 30:
             if ema < price:
 
-                if macd2 > 0 and macd_change == False and position == False and ema < price_highest and y <= 4 and sold == False:
+                if macd2 > 0 and macd_change == False and ema < price_highest and y <= 4 and sold == False:
                     macd_change = True
                     y += 1
-                elif macd2 < 0 and macd_change == False and position == True:
+                elif macd2 < 0 and macd_change == False:
                     macd_change = True
                     y = 0
                     sold = False
