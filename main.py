@@ -23,11 +23,11 @@ up = False
 macd_change = False
 sold = False
 
-ema_old = 61890
-lowest = 61380
-highest = 62372
-sar = 62372
-sar_bool = False
+ema_old = 61250
+lowest = 60680
+highest = 61000
+sar = 60013
+sar_bool = True
 
 f = open("COIN_SAVE.txt", "r")     #Restore last Coin
 symbol = f.read()
@@ -48,7 +48,8 @@ def on_close(ws ,a ,b):
     ws.run_forever()
 
 def on_error(ws, error):
-    print(error)
+    #print(error)
+    z = 0
 
 def save_trades():
     global trades
@@ -142,7 +143,7 @@ def telegram():
             last_message = ""
             quantity = Quantity(symbol, mtg)
             send_message("MTG changed!")
-        elif message == "restart everything" or message == "/restart everything":
+        elif message == "restart everything" or message == "/restart_everything":
             send_message(f"How much money do you want?    /end")
             last_message = message
             print("restart money")
@@ -182,7 +183,7 @@ def telegram():
 
 def on_message(ws, msg):
     global symbol, ema, ema_old, ema_old_fast, ema_old_slow, macd_line, ema_old_macd
-    global position, change, sar, lowest, highest, counter, quantity
+    global position, change, sar, sar2, lowest, highest, counter, quantity
     global macd_change, i, y, x, sar_bool, buy_price, sell_price, sold
     telegram()
 
@@ -203,7 +204,7 @@ def on_message(ws, msg):
         macd_line2 = ema_fast2 - ema_slow2
 
         ema_macd2 = macd_line2 * (2 / 10) + ema_old_macd * (1 - (2 / 10))
-        macd2 = macd_line2 - ema_macd2
+        macd2 = (macd_line2 + 1000) - (ema_macd2 + 1000)
 
         x += 1
 
@@ -245,7 +246,7 @@ def on_message(ws, msg):
             #ema(price)
             ema = price * (2/201) + ema_old * (1-(2/201))
             ema_old = ema
-            print(f"EMA200: {ema}")
+            print(f"EMA{i}: {ema}")
             i += 1
             if i==51:
                 send_message("ready")
@@ -259,20 +260,25 @@ def on_message(ws, msg):
 
             ema_macd = macd_line * (2/10) + ema_old_macd * (1-(2/10))
             ema_old_macd = ema_macd
-            macd = macd_line - ema_macd
+            macd = (macd_line + 1000) - (ema_macd + 1000)
             print(f"MACD: {macd}")
 
-        if len(json_message) >= 28 * 30:
+            if macd > 0 and macd_change == False and ema < price_highest and y <= 4 and sold == False:
+                macd_change = True
+                y += 1
+            elif macd < 0 and macd_change == False:
+                macd_change = True
+                y = 0
+                sold = False
+
+        if len(json_message) >= 900:
+
+            if macd2 > 0 and macd_change == False and y <= 4 and sold == False:
+                macd_change = True
+            elif macd2 < 0 and macd_change == False:
+                macd_change = True
+
             if ema < price:
-
-                if macd2 > 0 and macd_change == False and ema < price_highest and y <= 4 and sold == False:
-                    macd_change = True
-                    y += 1
-                elif macd2 < 0 and macd_change == False:
-                    macd_change = True
-                    y = 0
-                    sold = False
-
                 if change == 0: #Damit er zu beginn erst beim aufstieg wieder kauft
                     if macd2 > 0:
                         position = True
