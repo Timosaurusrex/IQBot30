@@ -22,11 +22,12 @@ position = False
 up = False
 macd_change = False
 sold = False
+stop = False
 
-ema_old = 61250
-lowest = 60680
-highest = 61000
-sar = 60013
+ema_old = 1.17
+lowest = 1.15
+highest = 1.19
+sar = 1.145
 sar_bool = True
 
 f = open("COIN_SAVE.txt", "r")     #Restore last Coin
@@ -43,13 +44,11 @@ def on_open(ws):
 def on_close(ws ,a ,b):
     print('closed connection')
     send_message("Er is abgestürzt!!!")
-    time.sleep(60)
     ws = websocket.WebSocketApp(SOCKET, on_open=on_open, on_close=on_close, on_message=on_message)
     ws.run_forever()
 
 def on_error(ws, error):
-    #print(error)
-    z = 0
+    print(error)
 
 def save_trades():
     global trades
@@ -62,7 +61,7 @@ def save_trades():
     f.close()
 
 def telegram():
-    global last_message, last_date, SOCKET, symbol, startcapital, trades, threshold, mtg, quantity, tradenum
+    global last_message, last_date, SOCKET, symbol, threshold, startcapital, mtg, quantity, position, sold, stop
     message = check_for_message()
     message = message.lower()
     date = check_for_message_date()
@@ -77,6 +76,22 @@ def telegram():
             send_message(f"Coin: {symbol.upper()}\nWelchen Coin wollen sie?    /end")
             last_message = message
             print("change coin")
+        elif message == "del" or message == "/del_order":
+            send_message(f"stopped")
+            position = False
+            sold = True
+            last_message = message
+            print("stopped")
+        elif message == "stop" or message == "/stop":
+            send_message(f"stopped")
+            stop = True
+            last_message = message
+            print("stopped")
+        elif message == "start" or message == "/start":
+            send_message(f"started")
+            stop = False
+            last_message = message
+            print("started")
         elif last_message == "/change_coin" or last_message == "change coin" and message != "/end":
             f = open(f"{symbol.upper()}.txt", "r")
             sell(symbol.upper(), float(f.read()))
@@ -184,7 +199,7 @@ def telegram():
 def on_message(ws, msg):
     global symbol, ema, ema_old, ema_old_fast, ema_old_slow, macd_line, ema_old_macd
     global position, change, sar, sar2, lowest, highest, counter, quantity
-    global macd_change, i, y, x, sar_bool, buy_price, sell_price, sold
+    global macd_change, i, y, x, sar_bool, buy_price, sell_price, sold, stop
     telegram()
 
     #print(msg)
@@ -290,7 +305,7 @@ def on_message(ws, msg):
                     if macd2 > 0 and macd_change == True:
                         if position:
                             print("Er scoutet!")
-                        elif position == False:
+                        elif position == False and stop == False:
                             if sar_bool:
                                 print("buy")
                                 send_message("buy")
